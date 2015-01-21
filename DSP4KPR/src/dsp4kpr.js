@@ -97,6 +97,7 @@ self.DSP.invert = function(buffer) {
  * @returns The stereo interleaved buffer
  */
 self.DSP.interleave = function(left, right) {
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   if (left.length !== right.length) {
     throw "Can not interleave. Channel lengths differ.";
   }
@@ -180,6 +181,7 @@ self.DSP.getChannel = self.DSP.deinterleave;
  * @returns A new Float32Array interleaved buffer.
  */
 self.DSP.mixSampleBuffers = function(sampleBuffer1, sampleBuffer2, negate, volumeCorrection){
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   var outputSamples = new Float32Array(sampleBuffer1);
 
   for(var i = 0; i<sampleBuffer1.length; i++){
@@ -285,6 +287,7 @@ self.FourierTransform = function(bufferSize, sampleRate) {
  * @constructor
  */
 self.DFT = function(bufferSize, sampleRate) {
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   self.FourierTransform.call(this, bufferSize, sampleRate);
 
   var N = bufferSize/2 * bufferSize;
@@ -816,7 +819,8 @@ self.RFFT.prototype.forward = function(buffer) {
   return spectrum;
 };
 
-function Sampler(file, bufferSize, sampleRate, playStart, playEnd, loopStart, loopEnd, loopMode) {
+self.Sampler = function(file, bufferSize, sampleRate, playStart, playEnd, loopStart, loopEnd, loopMode) {
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   this.file = file;
   this.bufferSize = bufferSize;
   this.sampleRate = sampleRate;
@@ -946,7 +950,8 @@ Sampler.prototype.reset = function() {
  *
  * @contructor
  */
-self.Oscillator = function(type, frequency, amplitude, bufferSize, sampleRate) {
+self.Oscillator = function(type, frequency, amplitude, bufferSize, sampleRate) { 
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   this.frequency  = frequency;
   this.amplitude  = amplitude;
   this.bufferSize = bufferSize;
