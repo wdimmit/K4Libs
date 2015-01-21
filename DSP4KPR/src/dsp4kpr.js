@@ -870,12 +870,12 @@ self.Sampler = function(file, bufferSize, sampleRate, playStart, playEnd, loopSt
   audio.play();
 }
 
-Sampler.prototype.applyEnvelope = function() {
+self.Sampler.prototype.applyEnvelope = function() {
   this.envelope.process(this.signal);
   return this.signal;
 };
 
-Sampler.prototype.generate = function() {
+self.Sampler.prototype.generate = function() {
   var frameOffset = this.frameCount * this.bufferSize;
  
   var loopWidth = this.playEnd * this.samples.length - this.playStart * this.samples.length;
@@ -927,14 +927,14 @@ Sampler.prototype.generate = function() {
   return this.signal;
 };
 
-Sampler.prototype.setFreq = function(frequency) {
+self.Sampler.prototype.setFreq = function(frequency) {
     var totalProcessed = this.samplesProcessed * this.step;
     this.frequency = frequency;
     this.step = this.frequency / this.rootFrequency;
     this.samplesProcessed = Math.round(totalProcessed/this.step);
 };
 
-Sampler.prototype.reset = function() {
+self.Sampler.prototype.reset = function() {
   this.samplesProcessed = 0;
   this.playhead = 0;
 };
@@ -1011,7 +1011,7 @@ self.Oscillator = function(type, frequency, amplitude, bufferSize, sampleRate) {
  *
  * @param {Number} amplitude The amplitude of the signal (between 0 and 1)
  */
-Oscillator.prototype.setAmp = function(amplitude) {
+self.Oscillator.prototype.setAmp = function(amplitude) {
   if (amplitude >= 0 && amplitude <= 1) {
     this.amplitude = amplitude;
   } else {
@@ -1024,13 +1024,13 @@ Oscillator.prototype.setAmp = function(amplitude) {
  *
  * @param {Number} frequency The frequency of the signal
  */  
-Oscillator.prototype.setFreq = function(frequency) {
+self.Oscillator.prototype.setFreq = function(frequency) {
   this.frequency = frequency;
   this.cyclesPerSample = frequency / this.sampleRate;
 };
      
 // Add an oscillator
-Oscillator.prototype.add = function(oscillator) {
+self.Oscillator.prototype.add = function(oscillator) {
   for ( var i = 0; i < this.bufferSize; i++ ) {
     //this.signal[i] += oscillator.valueAt(i);
     this.signal[i] += oscillator.signal[i];
@@ -1040,7 +1040,7 @@ Oscillator.prototype.add = function(oscillator) {
 };
      
 // Add a signal to the current generated osc signal
-Oscillator.prototype.addSignal = function(signal) {
+self.Oscillator.prototype.addSignal = function(signal) {
   for ( var i = 0; i < signal.length; i++ ) {
     if ( i >= this.bufferSize ) {
       break;
@@ -1060,19 +1060,19 @@ Oscillator.prototype.addSignal = function(signal) {
 };
      
 // Add an envelope to the oscillator
-Oscillator.prototype.addEnvelope = function(envelope) {
+self.Oscillator.prototype.addEnvelope = function(envelope) {
   this.envelope = envelope;
 };
 
-Oscillator.prototype.applyEnvelope = function() {
+self.Oscillator.prototype.applyEnvelope = function() {
   this.envelope.process(this.signal);
 };
      
-Oscillator.prototype.valueAt = function(offset) {
+self.Oscillator.prototype.valueAt = function(offset) {
   return this.waveTable[offset % this.waveTableLength];
 };
      
-Oscillator.prototype.generate = function() {
+self.Oscillator.prototype.generate = function() {
   var frameOffset = this.frameCount * this.bufferSize;
   var step = this.waveTableLength * this.frequency / this.sampleRate;
   var offset;
@@ -1090,123 +1090,39 @@ Oscillator.prototype.generate = function() {
   return this.signal;
 };
 
-Oscillator.Sine = function(step) {
+self.Oscillator.Sine = function(step) {
   return Math.sin(DSP.TWO_PI * step);
 };
 
-Oscillator.Square = function(step) {
+self.Oscillator.Square = function(step) {
   return step < 0.5 ? 1 : -1;
 };
 
-Oscillator.Saw = function(step) {
+self.Oscillator.Saw = function(step) {
   return 2 * (step - Math.round(step));
 };
 
-Oscillator.Triangle = function(step) {
+self.Oscillator.Triangle = function(step) {
   return 1 - 4 * Math.abs(Math.round(step) - step);
 };
 
-Oscillator.Pulse = function(step) {
+self.Oscillator.Pulse = function(step) {
   // stub
 };
  
-function ADSR(attackLength, decayLength, sustainLevel, sustainLength, releaseLength, sampleRate) {
-  this.sampleRate = sampleRate;
-  // Length in seconds
-  this.attackLength  = attackLength;
-  this.decayLength   = decayLength;
-  this.sustainLevel  = sustainLevel;
-  this.sustainLength = sustainLength;
-  this.releaseLength = releaseLength;
-  this.sampleRate    = sampleRate;
- 
-  // Length in samples
-  this.attackSamples  = attackLength  * sampleRate;
-  this.decaySamples   = decayLength   * sampleRate;
-  this.sustainSamples = sustainLength * sampleRate;
-  this.releaseSamples = releaseLength * sampleRate;
- 
-  // Updates the envelope sample positions
-  this.update = function() {
-    this.attack         =                this.attackSamples;
-    this.decay          = this.attack  + this.decaySamples;
-    this.sustain        = this.decay   + this.sustainSamples;
-    this.release        = this.sustain + this.releaseSamples;
-  };
- 
-  this.update();
- 
-  this.samplesProcessed = 0;
-}
+/*
+ *   IIRFilter(filter, cutoff, sampleRate): Infinite Impulse Response Filters
+ *    * Low Pass Filter
+ *   * High Pass Filter
+ *
+ *  Usage:
+ *
+ *  var filter = IIRFilter(LOWPASS, 200, 44100);
+ *  filter.process(signal);
+ */
 
-ADSR.prototype.noteOn = function() {
-  this.samplesProcessed = 0;
-  this.sustainSamples = this.sustainLength * this.sampleRate;
-  this.update();
-};
-
-// Send a note off when using a sustain of infinity to let the envelope enter the release phase
-ADSR.prototype.noteOff = function() {
-  this.sustainSamples = this.samplesProcessed - this.decaySamples;
-  this.update();
-};
-
-ADSR.prototype.processSample = function(sample) {
-  var amplitude = 0;
-
-  if ( this.samplesProcessed <= this.attack ) {
-    amplitude = 0 + (1 - 0) * ((this.samplesProcessed - 0) / (this.attack - 0));
-  } else if ( this.samplesProcessed > this.attack && this.samplesProcessed <= this.decay ) {
-    amplitude = 1 + (this.sustainLevel - 1) * ((this.samplesProcessed - this.attack) / (this.decay - this.attack));
-  } else if ( this.samplesProcessed > this.decay && this.samplesProcessed <= this.sustain ) {
-    amplitude = this.sustainLevel;
-  } else if ( this.samplesProcessed > this.sustain && this.samplesProcessed <= this.release ) {
-    amplitude = this.sustainLevel + (0 - this.sustainLevel) * ((this.samplesProcessed - this.sustain) / (this.release - this.sustain));
-  }
- 
-  return sample * amplitude;
-};
-
-ADSR.prototype.value = function() {
-  var amplitude = 0;
-
-  if ( this.samplesProcessed <= this.attack ) {
-    amplitude = 0 + (1 - 0) * ((this.samplesProcessed - 0) / (this.attack - 0));
-  } else if ( this.samplesProcessed > this.attack && this.samplesProcessed <= this.decay ) {
-    amplitude = 1 + (this.sustainLevel - 1) * ((this.samplesProcessed - this.attack) / (this.decay - this.attack));
-  } else if ( this.samplesProcessed > this.decay && this.samplesProcessed <= this.sustain ) {
-    amplitude = this.sustainLevel;
-  } else if ( this.samplesProcessed > this.sustain && this.samplesProcessed <= this.release ) {
-    amplitude = this.sustainLevel + (0 - this.sustainLevel) * ((this.samplesProcessed - this.sustain) / (this.release - this.sustain));
-  }
- 
-  return amplitude;
-};
-     
-ADSR.prototype.process = function(buffer) {
-  for ( var i = 0; i < buffer.length; i++ ) {
-    buffer[i] *= this.value();
-
-    this.samplesProcessed++;
-  }
- 
-  return buffer;
-};
-     
-     
-ADSR.prototype.isActive = function() {
-  if ( this.samplesProcessed > this.release || this.samplesProcessed === -1 ) {
-    return false;
-  } else {
-    return true;
-  }
-};
-
-ADSR.prototype.disable = function() {
-  this.samplesProcessed = -1;
-};
- 
-function IIRFilter(type, cutoff, resonance, sampleRate) {
+self.IIRFilter = function(type, cutoff, resonance, sampleRate) {
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   this.sampleRate = sampleRate;
 
   switch(type) {
@@ -1217,39 +1133,29 @@ function IIRFilter(type, cutoff, resonance, sampleRate) {
   }
 }
 
-/*IIRFilter.prototype.__defineGetter__('cutoff',
-  function() {
-    return this.func.cutoff;
-  }
-);*/
-Object.defineProperty(IIRFilter, 'cutoff', {
+Object.defineProperty(self.IIRFilter, 'cutoff', {
 	get: function() {
 	    return this.func.cutoff;
 	  } 
 });
 
-/*IIRFilter.prototype.__defineGetter__('resonance',
-  function() {
-    return this.func.resonance;
-  }
-);*/
-Object.defineProperty(IIRFilter, 'resonance', {
+Object.defineProperty(self.IIRFilter, 'resonance', {
 	get: function() {
 	    return this.func.resonance;
 	  } 
 });
 
 
-IIRFilter.prototype.set = function(cutoff, resonance) {
+self.IIRFilter.prototype.set = function(cutoff, resonance) {
   this.func.calcCoeff(cutoff, resonance);
 };
 
-IIRFilter.prototype.process = function(buffer) {
+self.IIRFilter.prototype.process = function(buffer) {
   this.func.process(buffer);
 };
 
 // Add an envelope to the filter
-IIRFilter.prototype.addEnvelope = function(envelope) {
+self.IIRFilter.prototype.addEnvelope = function(envelope) {
   if ( envelope instanceof ADSR ) {
     this.func.addEnvelope(envelope);
   } else {
@@ -1257,7 +1163,7 @@ IIRFilter.prototype.addEnvelope = function(envelope) {
   }
 };
 
-IIRFilter.LP12 = function(cutoff, resonance, sampleRate) {
+self.IIRFilter.LP12 = function(cutoff, resonance, sampleRate) {
   this.sampleRate = sampleRate;
   this.vibraPos   = 0;
   this.vibraSpeed = 0;
@@ -1305,11 +1211,12 @@ IIRFilter.LP12 = function(cutoff, resonance, sampleRate) {
   };
 }; 
 
-IIRFilter.LP12.prototype.addEnvelope = function(envelope) {
+self.IIRFilter.LP12.prototype.addEnvelope = function(envelope) {
   this.envelope = envelope;
 };
 
-function IIRFilter2(type, cutoff, resonance, sampleRate) {
+self.IIRFilter2 = function(type, cutoff, resonance, sampleRate) {
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   this.type = type;
   this.cutoff = cutoff;
   this.resonance = resonance;
@@ -1329,7 +1236,7 @@ function IIRFilter2(type, cutoff, resonance, sampleRate) {
   this.calcCoeff(cutoff, resonance);
 }
 
-IIRFilter2.prototype.process = function(buffer) {
+self.IIRFilter2.prototype.process = function(buffer) {
   var input, output;
   var f = this.f;
 
@@ -1359,7 +1266,7 @@ IIRFilter2.prototype.process = function(buffer) {
   }
 };
 
-IIRFilter2.prototype.addEnvelope = function(envelope) {
+self.IIRFilter2.prototype.addEnvelope = function(envelope) {
   if ( envelope instanceof ADSR ) {
     this.envelope = envelope;
   } else {
@@ -1367,7 +1274,7 @@ IIRFilter2.prototype.addEnvelope = function(envelope) {
   }
 };
 
-IIRFilter2.prototype.set = function(cutoff, resonance) {
+self.IIRFilter2.prototype.set = function(cutoff, resonance) {
   this.calcCoeff(cutoff, resonance);
 };
 
@@ -1493,7 +1400,8 @@ function sinh (arg) {
  */
 // Implementation based on:
 // http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
-function Biquad(type, sampleRate) {
+self.Biquad function(type, sampleRate) {
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   this.Fs = sampleRate;
   this.type = type;  // type of the filter
   this.parameterType = DSP.Q; // type of the parameter
@@ -1629,7 +1537,7 @@ function Biquad(type, sampleRate) {
     var coeff;
 
     switch (this.type) {
-      case DSP.LPF:       // H(s) = 1 / (s^2 + s/Q + 1)
+      case self.DSP.LPF:       // H(s) = 1 / (s^2 + s/Q + 1)
         this.b0 =  (1 - cosw0)/2;
         this.b1 =   1 - cosw0;
         this.b2 =  (1 - cosw0)/2;
@@ -1638,7 +1546,7 @@ function Biquad(type, sampleRate) {
         this.a2 =   1 - alpha;
         break;
 
-      case DSP.HPF:       // H(s) = s^2 / (s^2 + s/Q + 1)
+      case self.DSP.HPF:       // H(s) = s^2 / (s^2 + s/Q + 1)
         this.b0 =  (1 + cosw0)/2;
         this.b1 = -(1 + cosw0);
         this.b2 =  (1 + cosw0)/2;
@@ -1647,7 +1555,7 @@ function Biquad(type, sampleRate) {
         this.a2 =   1 - alpha;
         break;
 
-      case DSP.BPF_CONSTANT_SKIRT:       // H(s) = s / (s^2 + s/Q + 1)  (constant skirt gain, peak gain = Q)
+      case self.DSP.BPF_CONSTANT_SKIRT:       // H(s) = s / (s^2 + s/Q + 1)  (constant skirt gain, peak gain = Q)
         this.b0 =   sinw0/2;
         this.b1 =   0;
         this.b2 =  -sinw0/2;
@@ -1656,7 +1564,7 @@ function Biquad(type, sampleRate) {
         this.a2 =   1 - alpha;
         break;
 
-      case DSP.BPF_CONSTANT_PEAK:       // H(s) = (s/Q) / (s^2 + s/Q + 1)      (constant 0 dB peak gain)
+      case self.DSP.BPF_CONSTANT_PEAK:       // H(s) = (s/Q) / (s^2 + s/Q + 1)      (constant 0 dB peak gain)
         this.b0 =   alpha;
         this.b1 =   0;
         this.b2 =  -alpha;
@@ -1665,7 +1573,7 @@ function Biquad(type, sampleRate) {
         this.a2 =   1 - alpha;
         break;
 
-      case DSP.NOTCH:     // H(s) = (s^2 + 1) / (s^2 + s/Q + 1)
+      case self.DSP.NOTCH:     // H(s) = (s^2 + 1) / (s^2 + s/Q + 1)
         this.b0 =   1;
         this.b1 =  -2*cosw0;
         this.b2 =   1;
@@ -1674,7 +1582,7 @@ function Biquad(type, sampleRate) {
         this.a2 =   1 - alpha;
         break;
 
-      case DSP.APF:       // H(s) = (s^2 - s/Q + 1) / (s^2 + s/Q + 1)
+      case self.DSP.APF:       // H(s) = (s^2 - s/Q + 1) / (s^2 + s/Q + 1)
         this.b0 =   1 - alpha;
         this.b1 =  -2*cosw0;
         this.b2 =   1 + alpha;
@@ -1683,7 +1591,7 @@ function Biquad(type, sampleRate) {
         this.a2 =   1 - alpha;
         break;
 
-      case DSP.PEAKING_EQ:  // H(s) = (s^2 + s*(A/Q) + 1) / (s^2 + s/(A*Q) + 1)
+      case self.DSP.PEAKING_EQ:  // H(s) = (s^2 + s*(A/Q) + 1) / (s^2 + s/(A*Q) + 1)
         this.b0 =   1 + alpha*A;
         this.b1 =  -2*cosw0;
         this.b2 =   1 - alpha*A;
@@ -1692,7 +1600,7 @@ function Biquad(type, sampleRate) {
         this.a2 =   1 - alpha/A;
         break;
 
-      case DSP.LOW_SHELF:   // H(s) = A * (s^2 + (sqrt(A)/Q)*s + A)/(A*s^2 + (sqrt(A)/Q)*s + 1)
+      case self.DSP.LOW_SHELF:   // H(s) = A * (s^2 + (sqrt(A)/Q)*s + A)/(A*s^2 + (sqrt(A)/Q)*s + 1)
         coeff = sinw0 * Math.sqrt( (A^2 + 1)*(1/this.S - 1) + 2*A );
         this.b0 =    A*((A+1) - (A-1)*cosw0 + coeff);
         this.b1 =  2*A*((A-1) - (A+1)*cosw0);
@@ -1702,7 +1610,7 @@ function Biquad(type, sampleRate) {
         this.a2 =       (A+1) + (A-1)*cosw0 - coeff;
         break;
 
-      case DSP.HIGH_SHELF:   // H(s) = A * (A*s^2 + (sqrt(A)/Q)*s + 1)/(s^2 + (sqrt(A)/Q)*s + A)
+      case self.DSP.HIGH_SHELF:   // H(s) = A * (A*s^2 + (sqrt(A)/Q)*s + 1)/(s^2 + (sqrt(A)/Q)*s + A)
         coeff = sinw0 * Math.sqrt( (A^2 + 1)*(1/this.S - 1) + 2*A );
         this.b0 =    A*((A+1) + (A-1)*cosw0 + coeff);
         this.b1 = -2*A*((A-1) + (A+1)*cosw0);
@@ -1775,6 +1683,7 @@ function Biquad(type, sampleRate) {
  *
  */
 self.DSP.mag2db = function(buffer) {
+ trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   var minDb = -120;
   var minMag = Math.pow(10.0, minDb / 20.0);
 
@@ -1805,6 +1714,7 @@ self.DSP.mag2db = function(buffer) {
  *
  */
 self.DSP.freqz = function(b, a, w) {
+  trace('This function is untested on the Kinoma Create.  Results may be incorrect'); 
   var i, j;
 
   if (!w) {
