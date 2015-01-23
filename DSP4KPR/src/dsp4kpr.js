@@ -1400,7 +1400,7 @@ function sinh (arg) {
  */
 // Implementation based on:
 // http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
-self.Biquad function(type, sampleRate) {
+self.Biquad = function(type, sampleRate) {
   trace('This function is untested on the Kinoma Create.  Results may be incorrect');
   this.Fs = sampleRate;
   this.type = type;  // type of the filter
