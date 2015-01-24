@@ -76,5 +76,58 @@ exports.chart = function() {
 				return;
 		}
 	}
+ 	this.FastBarGraph = function(options) {
+		this.options = options;
+		this.draw = function(port, data) {
+			this.currentData = data;
+			//debugger;
+			var barCount = data.length;
+			var barWidth;
+			var barHeight;
+			var maxBarHeight = height;
+			var marginWidth;
+			var fillColor;
+			var backgroundColor;
+			
+			/*Draw the background*/
+			if (typeof(options.background) != 'undefined' )
+				backgroundColor = options.background;
+			else
+				backgroundColor = '#ffffff';
+			port.fillColor(backgroundColor,0,0,width,height);
+			
+			if (typeof(options.marginWidth) != 'undefined' )
+				marginWidth = options.marginWidth;
+			else
+				marginWidth = 0;
+			
+			/*Bar Dimensions*/
+			barWidth = (width / barCount) - (marginWidth * 2);
+			
+			/*Draw the Bars*/
+			for (i = 0; i < data.length; i++) {
+				
+				var ratio = (data[i] - dataMin) / dataMax;
+				barHeight = ratio * maxBarHeight;
+				
+				if (barHeight > 0) {
+					if (typeof(options.primaryColor) != 'undefined' ) 
+						fillColor = options.primaryColor;
+					else
+						fillColor = '#ff0000';				
+					
+					port.fillColor(fillColor, marginWidth + i * width / barCount,
+							  height - barHeight, barWidth, barHeight);
+				}						
+			}
+		}
+		
+		this.refresh = function(port, data) {
+			if (currentData != data)
+				this.draw(port, data);
+			else
+				return;
+		}
+	}
  
 }
