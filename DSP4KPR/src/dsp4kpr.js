@@ -1221,7 +1221,7 @@ self.WindowFunction.Bartlett = function(length, index) {
 };
 
 self.WindowFunction.BartlettHann = function(length, index) {
-  return 0.62 - 0.48 * Math.abs(index / (length - 1) - 0.5) - 0.38 * Math.cos(DSP.TWO_PI * index / (length - 1));
+  return 0.62 - 0.48 * Math.abs(index / (length - 1) - 0.5) - 0.38 * Math.cos(self.DSP.TWO_PI * index / (length - 1));
 };
 
 self.WindowFunction.Blackman = function(length, index, alpha) {
@@ -1241,11 +1241,11 @@ self.WindowFunction.Gauss = function(length, index, alpha) {
 };
 
 self.WindowFunction.Hamming = function(length, index) {
-  return 0.54 - 0.46 * Math.cos(DSP.TWO_PI * index / (length - 1));
+  return 0.54 - 0.46 * Math.cos(self.DSP.TWO_PI * index / (length - 1));
 };
 
 self.WindowFunction.Hann = function(length, index) {
-  return 0.5 * (1 - Math.cos(DSP.TWO_PI * index / (length - 1)));
+  return 0.5 * (1 - Math.cos(self.DSP.TWO_PI * index / (length - 1)));
 };
 
 self.WindowFunction.Lanczos = function(length, index) {
