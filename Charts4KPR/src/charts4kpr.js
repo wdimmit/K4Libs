@@ -16,117 +16,132 @@
  
  /* Inspired by "bargraph.js" by William Malone (www.williammalone.com) */
  
-exports.chart = function() {
- 	var width = 320;
- 	var height = 240;
- 	var dataMax = 0.6;
- 	var dataMin = 0;
+exports.chart = function(width, height) {
+	this.options = options;
+ 	//var height = 200;
  	var options;
  	var currentData;
  	
  	this.BarGraph = function(ctx, options) {
 		this.options = options;
-		
 		this.draw = function(data) {
 			this.currentData = data;
-			
+
 			var barCount = data.length;
 			var barWidth;
 			var barHeight;
 			var maxBarHeight = height;
-			var marginWidth;
+			var marginWidth = 0;
+			var fillColor = '#ff0000';
+			var backgroundColor = '#ffffff';
+			var skipBars = 1;
+		 	var dataMax = 50;
+		 	var dataMin = 0;
+		 	
+		 	
+			/*Setup Defaults*/
+			if ('background' in options )
+				ctx.fillStyle = options.background;
+			if ('marginWidth' in options)
+				marginWidth = options.marginWidth;
+			if ('dataMax' in options)
+				dataMax = options.dataMax
+			if ('dataMin' in options)
+				dataMin = options.dataMin
+			if ('skipBars' in options)
+				skipBars = options.skipBars
 			
 			/*Draw the background*/
-			if (typeof(options.background) != 'undefined' )
-				ctx.fillStyle = options.background;
-			else
-				ctx.fillStyle = '#ffffff';
 			ctx.fillRect(0,0,width,height);
-			
-			if (typeof(options.marginWidth) != 'undefined' )
-				marginWidth = options.marginWidth;
-			else
-				marginWidth = 0;
-			
+				
 			/*Bar Dimensions*/
+			barCount = barCount / options.skipBars;
 			barWidth = (width / barCount) - (marginWidth * 2);
+			
+			if ('primaryColor' in options ) 
+				ctx.fillStyle = options.primaryColor;
 			
 			/*Draw the Bars*/
 			for (i = 0; i < data.length; i++) {
-				
+				if (i%skipBars != 0)
+					continue;	
+			
 				var ratio = (data[i] - dataMin) / dataMax;
 				barHeight = ratio * maxBarHeight;
 				
 				if (barHeight > 0) {
-					if (typeof(options.background) != 'undefined' ) 
-						ctx.fillStyle = options.primaryColor;
-					else
-						ctx.fillStyle = '#ff0000';				
-					
 					ctx.fillRect(marginWidth + i * width / barCount,
 							  height - barHeight, barWidth, barHeight);
-				}						
+				}
 			}
 		}
 		
 		this.refresh = function(data) {
 			if (currentData != data)
-				this.draw(data);
+				this.draw(data);		
 			else
 				return;
 		}
 	}
  	this.FastBarGraph = function(options) {
 		this.options = options;
+
 		this.draw = function(port, data) {
 			this.currentData = data;
-			//debugger;
+
 			var barCount = data.length;
 			var barWidth;
 			var barHeight;
 			var maxBarHeight = height;
-			var marginWidth;
-			var fillColor;
-			var backgroundColor;
+			var marginWidth = 0;
+			var fillColor = '#ff0000';
+			var backgroundColor = '#ffffff';
+			var skipBars = 1;
+		 	var dataMax = 1;
+		 	var dataMin = 0;
+			
+			/*Setup Defaults*/
+			if ('background)' in options )
+				backgroundColor = options.background;
+			if ('marginWidth' in options)
+				marginWidth = options.marginWidth;
+			if ('primaryColor' in options ) 
+				fillColor = options.primaryColor;
+			if ('dataMax' in options)
+				dataMax = options.dataMax
+			if ('dataMin' in options)
+				dataMin = options.dataMin
+			if ('skipBars' in options)
+				skipBars = options.skipBars
 			
 			/*Draw the background*/
-			if (typeof(options.background) != 'undefined' )
-				backgroundColor = options.background;
-			else
-				backgroundColor = '#ffffff';
 			port.fillColor(backgroundColor,0,0,width,height);
 			
-			if (typeof(options.marginWidth) != 'undefined' )
-				marginWidth = options.marginWidth;
-			else
-				marginWidth = 0;
-			
 			/*Bar Dimensions*/
+			barCount = barCount / options.skipBars;
 			barWidth = (width / barCount) - (marginWidth * 2);
 			
 			/*Draw the Bars*/
 			for (i = 0; i < data.length; i++) {
-				
+				if (i%skipBars != 0)
+					continue;		
 				var ratio = (data[i] - dataMin) / dataMax;
 				barHeight = ratio * maxBarHeight;
 				
-				if (barHeight > 0) {
-					if (typeof(options.primaryColor) != 'undefined' ) 
-						fillColor = options.primaryColor;
-					else
-						fillColor = '#ff0000';				
-					
-					port.fillColor(fillColor, marginWidth + i * width / barCount,
-							  height - barHeight, barWidth, barHeight);
-				}						
+				if (barHeight > 0) {							
+					port.fillColor(fillColor, (marginWidth + (i / skipBars)* width) / barCount,
+							  height - barHeight, barWidth, barHeight);				
+				}
 			}
 		}
 		
 		this.refresh = function(port, data) {
 			if (currentData != data)
 				this.draw(port, data);
-			else
+			else {
+				trace("Not Refreshing - Same Data\n");
 				return;
+			}
 		}
 	}
  
