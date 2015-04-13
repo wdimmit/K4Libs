@@ -18,9 +18,76 @@
  
 exports.chart = function(width, height) {
 	this.options = options;
- 	//var height = 200;
  	var options;
  	var currentData;
+ 	
+ 	this.LineGraph = function(ctx, options) {
+		var primaryColor = 'black';
+		
+		this.draw = function(data) {
+			this.currentData = data;		
+			var prevX = 0;
+			var prevY = 0;
+			var maxDataValue = this.getMaxDataValue(data);
+			var lineHeight = (height / maxDataValue);
+			var xInterval = this.getXInterval(data, width);
+			
+			/* Handle Options*/
+			if ('background' in options )
+				ctx.fillStyle = options.background;
+			else 
+				ctx.fillStyle = '#999999';
+			if ('primaryColor' in options ) 
+				primaryColor = options.primaryColor;
+				
+			/* Draw the background*/
+			ctx.fillRect(0,0,width,height);		
+			/* Itterate through the data and draw the line */
+			for (var i = 0; i < data.length; i++) {
+			    var pt = data[i];
+			    var ptY = (maxDataValue - pt) * lineHeight;
+			    var ptX = (i * xInterval);
+			    
+			    /* If we're not on the first point, connect the line! */
+			    if (i > 0) {
+			        this.drawLine(ptX, ptY, prevX, prevY, primaryColor, 2);
+			    }
+			
+			    prevX = ptX;
+			    prevY = ptY;
+			}		
+		
+		
+		}
+		this.getMaxDataValue = function (data) {
+			var max = 0;
+			for (var i = 0; i < data.length; i++) {
+			    if (data[i] > max) 
+			    	    max = data[i];
+			}
+			return max;
+		};
+		
+		this.getXInterval = function(data,width) {
+			return Math.round(width / (data.length - 1));
+		};
+		
+		this.drawLine = function(startX, startY, endX, endY, strokeStyle, lineWidth) {
+			if (strokeStyle != null) ctx.strokeStyle = strokeStyle;
+			if (lineWidth != null) ctx.lineWidth = lineWidth;
+			ctx.beginPath();
+			ctx.moveTo(startX, startY);
+			ctx.lineTo(endX, endY);
+			ctx.stroke();
+			ctx.closePath();
+		};
+		this.refresh = function(data) {
+			if (currentData != data)
+				this.draw(data);		
+			else
+				return;
+		}
+ 	}
  	
  	this.BarGraph = function(ctx, options) {
 		this.options = options;
